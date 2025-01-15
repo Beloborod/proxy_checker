@@ -1,8 +1,9 @@
 from mongoengine import connect
 
+db_name = "YOUR_DB_NAME"
 
 def connection():
-    connect('DB_NAME',
+    connect(db_name,
             host="HOST_NAME",
             username="USER_NAME",
             password="USER_PASSWORD",
