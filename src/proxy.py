@@ -116,7 +116,7 @@ class ProxyCollection(object):
     def validate_all(self, force: bool = False, sync_mongo: bool = False, with_web_driver: bool = False,
                      multiprocess: bool = False, max_workers: int = 10, drop_mongo: bool = False):
         if drop_mongo:
-            from models.connecter import connection, db_name
+            from models.connector import connection, db_name
             connector = connection()
             connector.drop_database(db_name)
             logger.info(f"Droped DB {db_name}")

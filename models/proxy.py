@@ -1,5 +1,5 @@
 from mongoengine import *
-from models.connecter import connection
+from models.connector import connection
 
 connection()
 
