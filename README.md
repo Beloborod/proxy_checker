@@ -1,5 +1,5 @@
 # About
-
+Opensource self-hosted proxy checker from free resources, with self-validation, store in file or MongoDB
 
 # Installation
 1) Clone repo via ssh ```git@github.com:Beloborod/proxy_checker.git```\
