@@ -8,6 +8,8 @@ from src.logger import logger_name
 
 logger = logging.getLogger(logger_name)
 
+
+# Define URLS to parse and wrap proxies lists
 URLS_TO_WRAP: Final = [
     "https://www.sslproxies.org/",
     "https://www.us-proxy.org/",
@@ -17,6 +19,7 @@ URLS_TO_WRAP: Final = [
 
 
 def get_proxies_free_proxy() -> List[Proxy]:
+    # Initialise wrapper and get proxies
     with DriverWrapper() as driver_wrapper:
         proxies = []
         for url in URLS_TO_WRAP:

@@ -89,7 +89,7 @@ proxy_collection.load_from_mongo()
 proxy_collection.validate_all(
     force=False,  # Validate proxy even if it's currently valid
     sync_mongo=False,  # Add valid proxy to MongoDB, and remove invalid from MongoDB
-    with_web_driver=False,  # Use seleniumwire.webdriver instant requests to validate proxies
+    with_web_driver=False,  # Use seleniumwire.webdriver instead requests to validate proxies
     multiprocess=False,  # Use multithreading library to speedup validating, STRONGLY RECOMMENDED
     max_workers=10,  # Maximum of parallel threads to run, if multiprocess=True
     drop_mongo=False  # Drop current MongoDB proxy collection before validating
@@ -117,6 +117,6 @@ proxy_collection.load("proxies.json")
 ```
 ### TODOS
 - [x] ~~Write README =)~~
-- [ ] Add docstrings
+- [x] ~~Add docstrings~~
 - [ ] Add more proxy sites to parse proxy
 - [ ] Make MongoDB not necessary

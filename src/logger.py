@@ -1,10 +1,20 @@
 import logging
 import logging.handlers
 import os
+from typing import Union
 
+# Name for logger
 logger_name = "proxy_checker"
 
-def setup_logger(path: str = "../logs", max_bytes: int = 5000000, backup_count = 10, level=logging.INFO):
+def setup_logger(path: str = "../logs", max_bytes: int = 5000000, backup_count: int = 10,
+                 level: Union[int, str] = logging.INFO) -> logging.Logger:
+    """
+    :param path: Path to dir for saving logs
+    :param max_bytes: Max size of log file in bytes
+    :param backup_count: Max count of log files
+    :param level: Logging level
+    :return: Logger object
+    """
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     dir_name = os.path.dirname(__file__)
     handler = logging.handlers.RotatingFileHandler(f"{os.path.join(dir_name, path)}/{logger_name}.log",
