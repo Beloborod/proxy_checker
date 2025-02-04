@@ -1,4 +1,4 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, Self
 from seleniumwire import webdriver
 from typing import Union
 
@@ -39,7 +39,7 @@ class DriverWrapper(object):
         self.proxies = proxy
         self.driver: Union[Driver, None] = None
 
-    def __enter__(self) -> object:
+    def __enter__(self) -> Self:
         self.driver = self._get_driver()
         return self
 
@@ -68,7 +68,7 @@ class DriverWrapper(object):
             raise IndexError(f"Current list of proxies contains {len(self.proxies)} elements, but called {proxy_index}")
         return True
 
-    def new_proxy_list(self, proxy: PROXY_LIST) -> object:
+    def new_proxy_list(self, proxy: PROXY_LIST) -> Self:
         """
         Recreate driver with new proxy list
         :param proxy: List of proxies
