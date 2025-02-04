@@ -38,7 +38,7 @@ def get_proxies_best_proxies() -> List[Proxy]:
                     proxy = Proxy(ip=IPv4Address(ip.split(":")[0]), port=int(ip.split(":")[1]),
                                   country="UNKNOWN",
                                   protocols=[protocol.find('h3', {'class': 'text-left'}).text.lower()],
-                                  anonymity="transparent")
+                                  anonymity="UNKNOWN")
                     proxies.append(proxy)
             logger.info(f"After {url} totally get {len(proxies)}")
     return proxies

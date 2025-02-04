@@ -18,7 +18,7 @@ from src.logger import logger_name
 logger = logging.getLogger(logger_name)
 
 PROTOCOLS: Final = ["socks4", "socks5", "http", "https"]
-ANONYMITY: Final = Union["elite", "anonymous", "transparent"]
+ANONYMITY: Final = Union["elite", "anonymous", "transparent", "UNKNOWN"]
 
 
 class Proxy(object):
