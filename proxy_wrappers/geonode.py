@@ -31,7 +31,7 @@ def get_proxies_geonode() -> List[Proxy]:
             soup = BeautifulSoup(driver_wrapper.driver.page_source, 'html.parser')
             data = json.loads(soup.text)['data']
             for proxy_dict in data:
-                if (time.time() - proxy_dict["lastChecked"]) <= 10*60:
+                if (time.time() - proxy_dict["lastChecked"]) <= 2*60:
                     proxy = Proxy(ip=IPv4Address(proxy_dict['ip']), port=int(proxy_dict['port']),
                                   country=proxy_dict['country'] if 'country' in proxy_dict.keys() else "UNKNOWN",
                                   protocols=proxy_dict['protocols'],
