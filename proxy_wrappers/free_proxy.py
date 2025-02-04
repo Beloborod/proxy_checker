@@ -34,7 +34,7 @@ def get_proxies_free_proxy() -> List[Proxy]:
             for row in ips.find_all("tr")[1:]:
                 col = row.find_all("td")
                 last_checked = {"cnt": col[7].contents[0].split(" ")[0], "unit": col[7].contents[0].split(" ")[1]}
-                if (last_checked['unit'] in ['mins', 'min', 'secs', 'sec']) \
+                if (last_checked['unit'] in ['min', 'secs', 'sec']) \
                         or (int(last_checked['cnt']) <= 10 and last_checked['unit'] == 'mins'):
                     proxy = Proxy(ip=IPv4Address(col[0].contents[0]), port=int(col[1].contents[0]),
                                   country=col[2].contents[0] if len(col[2].contents) > 0 else "UNKNOWN",

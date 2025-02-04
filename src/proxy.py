@@ -180,7 +180,7 @@ class ProxyCollection(object):
                 logger.info(f"Check {pr.proxy_str}")
                 try:
                     if with_web_driver:
-                        with DriverWrapper(proxies_l) as driver_wrapper: 
+                        with DriverWrapper(proxies_l) as driver_wrapper:
                                 driver_wrapper.change_proxy(proxies_l.index(pr))
                                 driver_wrapper.driver.get("https://httpbin.io/ip")
                                 ip_parsed = json.loads(driver_wrapper.driver.find_element(By.TAG_NAME, "body").text)
@@ -212,7 +212,8 @@ class ProxyCollection(object):
                         pr.delete_from_mongo()
                     logger.info(f"NOT VALID {pr.proxy_str}")
                 except Exception as e:
-                    logger.error(f"{traceback.format_exc()}")
+                    pr.valid = False
+                    logger.info(f"NOT VALID {pr.proxy_str}")
 
         try:
             if multiprocess:
