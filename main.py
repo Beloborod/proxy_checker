@@ -1,3 +1,4 @@
+from proxy_wrappers.thespeedx import get_proxies_thespeedx
 from src.proxy import ProxyCollection
 from src.logger import setup_logger
 from proxy_wrappers.free_proxy import get_proxies_free_proxy
@@ -17,6 +18,9 @@ if __name__ == "__main__":
         proxy_collection.add_proxy(proxy)
 
     for proxy in get_proxies_best_proxies():
+        proxy_collection.add_proxy(proxy)
+
+    for proxy in get_proxies_thespeedx():
         proxy_collection.add_proxy(proxy)
 
     """--- UPDATE SAVED PROXIES ---"""
