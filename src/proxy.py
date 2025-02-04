@@ -32,7 +32,7 @@ class Proxy(object):
         """
         for protocol in protocols:
             if protocol not in PROTOCOLS:
-                raise ValueError(f"protocols must be only {PROTOCOLS}")
+                raise ValueError(f"protocols must be only {PROTOCOLS}, not {protocol}")
         self.ip = ip
         self.port = port
         self.country = country

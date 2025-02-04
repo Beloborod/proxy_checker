@@ -1,19 +1,21 @@
+from time import sleep
 from typing import TypedDict, List, Self
-from seleniumwire import webdriver
+from seleniumwire import undetected_chromedriver
 from typing import Union
+from selenium_stealth import stealth
 
 
 PROXY_LIST = List[TypedDict("PROXY_LIST", {'http': str, 'https': str})]
 
 
-class Driver(webdriver.Chrome):
+class Driver(undetected_chromedriver.Chrome):
     def __init__(self, proxy: PROXY_LIST = None):
         """
         Represent Chrome driver to access sites
         :param proxy: Proxy to connect
         """
         agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'
-        options = webdriver.ChromeOptions()
+        options = undetected_chromedriver.ChromeOptions()
         
         options.add_argument("--headless")
         options.add_argument("--window-size=1920,1080")
@@ -21,13 +23,14 @@ class Driver(webdriver.Chrome):
         options.add_argument('--no-sandbox')
         options.add_argument("--disable-extensions")
         options.add_argument("--ignore-certificate-errors")
+        options.add_argument("--enable-javascript")
 
         if proxy:
-            webdriver.Chrome.__init__(self, options=options, seleniumwire_options={
+            super().__init__(use_subprocess=False, options=options, seleniumwire_options={
                 'proxy': proxy[0],
-            })
+            }, version_main=132)
         else:
-            webdriver.Chrome.__init__(self, options=options, seleniumwire_options={})
+            super().__init__(use_subprocess=False, options=options, version_main=132)
 
 
 class DriverWrapper(object):
@@ -54,6 +57,14 @@ class DriverWrapper(object):
         """
         driver = Driver(self.proxies)
         driver.set_page_load_timeout(10)
+        stealth(driver,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+                )
         return driver
 
     def change_proxy(self, proxy_index: int) -> bool:

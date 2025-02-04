@@ -1,6 +1,5 @@
 import json
 import time
-import traceback
 from ipaddress import IPv4Address
 from typing import List, Final
 from src.wire_web_driver import DriverWrapper
@@ -37,4 +36,5 @@ def get_proxies_geonode() -> List[Proxy]:
                                   protocols=proxy_dict['protocols'],
                                   anonymity=proxy_dict['anonymityLevel'])
                     proxies.append(proxy)
+            logger.info(f"After {url} totally get {len(proxies)}")
         return proxies
