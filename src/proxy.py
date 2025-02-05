@@ -22,13 +22,22 @@ ANONYMITY: Final = Union["elite", "anonymous", "transparent", "UNKNOWN"]
 
 
 class Proxy(object):
-    def __init__(self, ip: IPv4Address, port: int, country: str, protocols: List[str], anonymity: ANONYMITY):
+    def __init__(self, ip: IPv4Address, port: int, country: str, protocols: List[str], anonymity: ANONYMITY,
+                 total_checks: int = 0, success_checks: int = 0, judge_invalid_count: int = 0, valid: bool = None,
+                 judged: bool = None, validation_time: int = 0, redirects: bool = False, judge_valid_count: int = 0):
         """
         :param ip: Ip address for proxy
         :param port: Port to connect
         :param country: Country of proxy server
         :param protocols: Available protocols
         :param anonymity: Anonymity level
+        :param total_checks: Total count of validations and judges
+        :param success_checks: Count of success validations
+        :param judge_valid_count: Count of successful judge processes
+        :param judge_invalid_count: Count of unsuccessful judge processes
+        :param valid: If proxy already valid
+        :param judged: If proxy already judged
+        :param validation_time: Last validation or judge time
         """
         for protocol in protocols:
             if protocol not in PROTOCOLS:
@@ -38,15 +47,21 @@ class Proxy(object):
         self.country: str = country
         self.protocols: PROTOCOLS = protocols
         self.anonymity: ANONYMITY = anonymity
-        self._valid = None
-        self._validation_time = 0
+        self.total_checks: int = total_checks
+        self.success_checks: int = success_checks
+        self.judge_invalid_count: int = judge_invalid_count
+        self.judge_valid_count: int = judge_valid_count
+        self.validation_time: int = validation_time
+        self.redirects: bool = redirects
+        self._valid: bool = valid
+        self._judged: bool = judged
 
     @property
     def valid(self) -> bool:
         """
         :return: True if proxy was checked last 120 secs, else - return False
         """
-        if self._valid and ((time() - self._validation_time) < 120):
+        if self._valid and ((time() - self.validation_time) < 120):
             return True
         else:
             return False
@@ -54,7 +69,29 @@ class Proxy(object):
     @valid.setter
     def valid(self, value: bool):
         self._valid = value
-        self._validation_time = time()
+        self.validation_time = time()
+        self.total_checks += 1
+        if value:
+            self.success_checks += 1
+
+    @property
+    def judged(self) -> bool:
+        """
+        :return: True if proxy was judged last 120 secs, else - return False
+        """
+        if self._judged and ((time() - self.validation_time) < 120):
+            return True
+        else:
+            return False
+
+    @judged.setter
+    def judged(self, value: bool):
+        self._judged = value
+        self.valid = value
+        if not value:
+            self.judge_invalid_count += 1
+        else:
+            self.judge_valid_count += 1
 
     @property
     def proxy_str(self):
@@ -70,35 +107,50 @@ class Proxy(object):
         """
         return {"http": self.proxy_str, "https": self.proxy_str}
 
-    def save_in_mongo(self, redirected: bool = False) -> None:
+    def save_in_mongo(self) -> None:
         """
         Save current proxy to MongoDB
-        :param redirected: True if IP after reach destination not equal proxy ip
         """
         from models.proxy import ProxyModel
         proxy_model = ProxyModel.objects.filter(ip=self.ip.__str__(), port=self.port).first()
-        if proxy_model is None:
-            proxy_model = ProxyModel()
-        proxy_model.ip = self.ip.__str__()
-        proxy_model.port = self.port
-        proxy_model.protocols = self.protocols
-        proxy_model.anonymity = self.anonymity
-        proxy_model.country = self.country
-        proxy_model.validation_date = datetime.fromtimestamp(self._validation_time)
-        proxy_model.redirects = redirected
-        proxy_model.save()
-        logger.info(f"Save {self.proxy_str} to MONGO")
 
-    def delete_from_mongo(self) -> None:
-        """
-        Delete current proxy from MongoDB
-        """
-        from models.proxy import ProxyModel
-        proxy_model = ProxyModel.objects.filter(ip=self.ip.__str__(), port=self.port).first()
-        if proxy_model is None:
+        success_ratio = self.success_checks / self.total_checks
+        judge_ratio = (self.judge_valid_count / (self.judge_valid_count + self.judge_invalid_count)) \
+            if (self.judge_valid_count + self.judge_invalid_count) != 0 else 0
+
+        if ((success_ratio >= 0.5) and (judge_ratio >= 0.5) and (self.judge_invalid_count < 10)) \
+                or ((success_ratio == 1) and (judge_ratio == 0)):
+            still_valid = True
+        else:
+            still_valid = False
+
+        if (proxy_model is None) and still_valid:
+            proxy_model = ProxyModel()
+        elif proxy_model and (not still_valid):
+            proxy_model.delete()
+            logger.info(f"Delete {self.proxy_str} from MONGO (not still_valid)")
             return
-        proxy_model.delete()
-        logger.info(f"Delete {self.proxy_str} from MONGO")
+        elif (proxy_model is None) and (not still_valid):
+            logger.info(f"Skip saving {self.proxy_str} not still_valid")
+            return
+        try:
+            proxy_model.ip = self.ip.__str__()
+            proxy_model.port = self.port
+            proxy_model.protocols = self.protocols
+            proxy_model.anonymity = self.anonymity
+            proxy_model.country = self.country
+            proxy_model.validation_date = datetime.fromtimestamp(self.validation_time)
+            proxy_model.redirects = self.redirects
+            proxy_model.total_checks = self.total_checks
+            proxy_model.success_checks = self.success_checks
+            proxy_model.judge_invalid_count = self.judge_invalid_count
+            proxy_model.valid = self.valid
+            proxy_model.judged = self.judged
+            proxy_model.judge_valid_count = self.judge_valid_count
+            proxy_model.save()
+            logger.info(f"Save {self.proxy_str} to MONGO")
+        except Exception as e:
+            traceback.print_exc()
 
 
 class ProxyCollection(object):
@@ -146,8 +198,11 @@ class ProxyCollection(object):
         proxy_models = ProxyModel.objects()
         for proxy_model in proxy_models:
             self.add_proxy(Proxy(IPv4Address(proxy_model.ip), proxy_model.port, proxy_model.country,
-                                 proxy_model.protocols, proxy_model.anonymity))
-        logger.info(f"Load proxies from MONGO")
+                                 proxy_model.protocols, proxy_model.anonymity, proxy_model.total_checks,
+                                 proxy_model.success_checks, proxy_model.judge_invalid_count, proxy_model.valid,
+                                 proxy_model.judged, int(proxy_model.validation_date.timestamp()),
+                                 proxy_model.redirects, proxy_model.judge_valid_count))
+        logger.info(f"Loaded proxies from MONGO")
 
     def validate_all(self, force: bool = False, sync_mongo: bool = False, with_web_driver: bool = False,
                      multiprocess: bool = False, max_workers: int = 10, drop_mongo: bool = False,
@@ -199,30 +254,31 @@ class ProxyCollection(object):
                         pr.valid = True
                         if sync_mongo:
                             pr.save_in_mongo()
-                        logger.info(f"VALID {pr.proxy_str}")
+                        logger.info(f"VALID {pr.proxy_str} IP IS RIGHT")
                     elif ip_parsed['origin'].split(":")[0] != self_ip:
                         pr.valid = True
+                        pr.redirects = True
                         if sync_mongo:
-                            pr.save_in_mongo(redirected=True)
-                        logger.info(f"VALID {pr.proxy_str}")
+                            pr.save_in_mongo()
+                        logger.info(f"VALID {pr.proxy_str} BUT REDIRECTS")
                     else:
                         pr.valid = False
                         if sync_mongo:
-                            pr.delete_from_mongo()
-                        logger.info(f"NOT VALID {pr.proxy_str}")
+                            pr.save_in_mongo()
+                        logger.info(f"NOT VALID {pr.proxy_str} IP IS MINE {ip_parsed}")
 
                 except (SSLError, ProxyError, ConnectionError, UnboundLocalError, ConnectionResetError,
                         TcpDisconnect, MitmproxyException, HttpReadDisconnect, ReadTimeoutError, ReadTimeout,
                         JSONDecodeError):
                     pr.valid = False
                     if sync_mongo:
-                        pr.delete_from_mongo()
-                    logger.info(f"NOT VALID {pr.proxy_str}")
+                        pr.save_in_mongo()
+                    logger.info(f"NOT VALID {pr.proxy_str} expected error")
                 except Exception as e:
                     pr.valid = False
                     if sync_mongo:
-                        pr.delete_from_mongo()
-                    logger.info(f"NOT VALID {pr.proxy_str}")
+                        pr.save_in_mongo()
+                    logger.info(f"NOT VALID {pr.proxy_str} unexpected error")
 
                 try:
                     if pr.valid and (judge or force):
@@ -250,36 +306,39 @@ class ProxyCollection(object):
                         ]
                         if self_ip in info:
                             pr.anonymity = "transparent"
+                            pr.judged = True
                             if sync_mongo:
                                 pr.save_in_mongo()
                             logger.info(f"Proxy {pr.proxy_str} judged to {pr.anonymity}")
                         elif any([header in info for header in privacy_headers]):
                             pr.anonymity = "anonymous"
+                            pr.judged = True
                             if sync_mongo:
                                 pr.save_in_mongo()
                             logger.info(f"Proxy {pr.proxy_str} judged to {pr.anonymity}")
                         elif "PHP Proxy Judge" in info:
                             pr.anonymity = "elite"
+                            pr.judged = True
                             if sync_mongo:
                                 pr.save_in_mongo()
                             logger.info(f"Proxy {pr.proxy_str} judged to {pr.anonymity}")
                         else:
-                            pr.valid = False
+                            pr.judged = False
                             if sync_mongo:
-                                pr.delete_from_mongo()
+                                pr.save_in_mongo()
                             logger.info(f"NOT VALID WHILE JUDGE {pr.proxy_str}")
                 except (SSLError, ProxyError, ConnectionError, UnboundLocalError, ConnectionResetError,
                         TcpDisconnect, MitmproxyException, HttpReadDisconnect, ReadTimeoutError, ReadTimeout,
                         JSONDecodeError):
-                    pr.valid = False
+                    pr.judged = False
                     if sync_mongo:
-                        pr.delete_from_mongo()
-                    logger.info(f"NOT VALID WHILE JUDGE {pr.proxy_str}")
+                        pr.save_in_mongo()
+                    logger.info(f"NOT VALID WHILE JUDGE {pr.proxy_str} expected error")
                 except Exception as e:
-                    pr.valid = False
+                    pr.judged = False
                     if sync_mongo:
-                        pr.delete_from_mongo()
-                    logger.info(f"NOT VALID WHILE JUDGE  {pr.proxy_str}")
+                        pr.save_in_mongo()
+                    logger.info(f"NOT VALID WHILE JUDGE  {pr.proxy_str} unexpected error")
 
         try:
             if multiprocess:
@@ -307,15 +366,24 @@ class ProxyCollection(object):
         with open(path, "w+") as f:
             generated_file = []
             for proxy in self.proxies:
-                generated_file.append(
-                    {
-                        "ip": proxy.ip.__str__(),
-                        "port": proxy.port,
-                        "country": proxy.country,
-                        "protocols": proxy.protocols,
-                        "anonymity": proxy.anonymity
-                    }
-                )
+                if proxy.valid:
+                    generated_file.append(
+                        {
+                            "ip": proxy.ip.__str__(),
+                            "port": proxy.port,
+                            "country": proxy.country,
+                            "protocols": proxy.protocols,
+                            "anonymity": proxy.anonymity,
+                            "total_checks": proxy.total_checks,
+                            "success_checks": proxy.success_checks,
+                            "judge_invalid_count": proxy.judge_invalid_count,
+                            "judge_valid_count": proxy.judge_valid_count,
+                            "valid": proxy.valid,
+                            "judged": proxy.judged,
+                            "validation_time": proxy.validation_time,
+                            "redirects": proxy.redirects
+                        }
+                    )
             f.write(json.dumps(generated_file))
 
     def load(self, path: str = "./proxies.json") -> None:
@@ -328,7 +396,11 @@ class ProxyCollection(object):
             for proxy_dict in proxies_list:
                 proxy = Proxy(ip=IPv4Address(proxy_dict['ip']), port=int(proxy_dict['port']),
                               country=proxy_dict['country'], protocols=proxy_dict['protocols'],
-                              anonymity=proxy_dict['anonymity'])
+                              anonymity=proxy_dict['anonymity'], total_checks=proxy_dict['total_checks'],
+                              success_checks=proxy_dict['success_checks'],
+                              judge_invalid_count=proxy_dict['judge_invalid_count'], valid=proxy_dict['valid'],
+                              judged=proxy_dict['judged'], validation_time=proxy_dict['validation_time'],
+                              redirects=proxy_dict['redirects'], judge_valid_count=proxy_dict['judge_valid_count'])
                 self.add_proxy(proxy)
 
     def get_proxies(self, anonymity: List[ANONYMITY] = None, protocols: list = None) -> List[Proxy]:
