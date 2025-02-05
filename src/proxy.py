@@ -169,6 +169,9 @@ class ProxyCollection(object):
             connector.drop_database(db_name)
             logger.info(f"Droped DB {db_name}")
 
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
         proxies_objects: List[Proxy] = []
         proxies_list = []
         for proxy in self.proxies:
