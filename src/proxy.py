@@ -18,7 +18,7 @@ from src.logger import logger_name
 logger = logging.getLogger(logger_name)
 
 PROTOCOLS: Final = ["socks4", "socks5", "http", "https"]
-ANONYMITY: Final = Union["elite", "anonymous", "transparent"]
+ANONYMITY: Final = Union["elite", "anonymous", "transparent", "UNKNOWN"]
 
 
 class Proxy(object):
@@ -32,12 +32,12 @@ class Proxy(object):
         """
         for protocol in protocols:
             if protocol not in PROTOCOLS:
-                raise ValueError(f"protocols must be only {PROTOCOLS}")
-        self.ip = ip
-        self.port = port
-        self.country = country
-        self.protocols = protocols
-        self.anonymity = anonymity
+                raise ValueError(f"protocols must be only {PROTOCOLS}, not {protocol}")
+        self.ip: IPv4Address = ip
+        self.port: int = port
+        self.country: str = country
+        self.protocols: PROTOCOLS = protocols
+        self.anonymity: ANONYMITY = anonymity
         self._valid = None
         self._validation_time = 0
 
@@ -150,21 +150,27 @@ class ProxyCollection(object):
         logger.info(f"Load proxies from MONGO")
 
     def validate_all(self, force: bool = False, sync_mongo: bool = False, with_web_driver: bool = False,
-                     multiprocess: bool = False, max_workers: int = 10, drop_mongo: bool = False) -> None:
+                     multiprocess: bool = False, max_workers: int = 10, drop_mongo: bool = False,
+                     judge: bool = True) -> None:
         """
         Validate all proxies from collected list
         :param force: If True - validate already valid proxies
         :param sync_mongo: If True - delete from mongo invalid proxies, and add valid
-        :param with_web_driver: If True - use seleniumwire.webdriver instead requests
+        :param with_web_driver: If True - use seleniumwire.undetected_chromedriver instead requests
         :param multiprocess: If True - use multithreading to speedup proxy validation
         :param max_workers: Maximum of parallel threads to run, if multiprocess=True
         :param drop_mongo: If True - drop currently collected MongoDB proxies collection
+        :param judge: If True - use http://proxyjudge.us/azenv.php to check proxy anonymity if current proxy
+        anonymity is unknowns, or allways if force param is True
         """
         if drop_mongo:
             from models.connector import connection, db_name
             connector = connection()
             connector.drop_database(db_name)
             logger.info(f"Droped DB {db_name}")
+
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
         proxies_objects: List[Proxy] = []
         proxies_list = []
@@ -204,6 +210,7 @@ class ProxyCollection(object):
                         if sync_mongo:
                             pr.delete_from_mongo()
                         logger.info(f"NOT VALID {pr.proxy_str}")
+
                 except (SSLError, ProxyError, ConnectionError, UnboundLocalError, ConnectionResetError,
                         TcpDisconnect, MitmproxyException, HttpReadDisconnect, ReadTimeoutError, ReadTimeout,
                         JSONDecodeError):
@@ -212,17 +219,77 @@ class ProxyCollection(object):
                         pr.delete_from_mongo()
                     logger.info(f"NOT VALID {pr.proxy_str}")
                 except Exception as e:
-                    logger.error(f"{traceback.format_exc()}")
+                    pr.valid = False
+                    if sync_mongo:
+                        pr.delete_from_mongo()
+                    logger.info(f"NOT VALID {pr.proxy_str}")
+
+                try:
+                    if pr.valid and (judge or force):
+                        logger.info(f"Proxy {pr.proxy_str} is VALID, judge now")
+                        if with_web_driver:
+                            with DriverWrapper(proxies_l) as driver_wrapper:
+                                driver_wrapper.change_proxy(proxies_l.index(pr))
+                                driver_wrapper.driver.get("http://proxyjudge.us/azenv.php")
+                                info = driver_wrapper.driver.find_element(By.TAG_NAME, "body").text
+                        else:
+                            with requests.Session() as s:
+                                s.proxies.update(pr.proxy_dict)
+                                response = s.get("http://proxyjudge.us/azenv.php", verify=False, timeout=10)
+                                info = response.text
+
+                        privacy_headers = [
+                            'VIA',
+                            'X-FORWARDED-FOR',
+                            'X-FORWARDED',
+                            'FORWARDED-FOR',
+                            'FORWARDED-FOR-IP',
+                            'FORWARDED',
+                            'CLIENT-IP',
+                            'PROXY-CONNECTION'
+                        ]
+                        if self_ip in info:
+                            pr.anonymity = "transparent"
+                            if sync_mongo:
+                                pr.save_in_mongo()
+                            logger.info(f"Proxy {pr.proxy_str} judged to {pr.anonymity}")
+                        elif any([header in info for header in privacy_headers]):
+                            pr.anonymity = "anonymous"
+                            if sync_mongo:
+                                pr.save_in_mongo()
+                            logger.info(f"Proxy {pr.proxy_str} judged to {pr.anonymity}")
+                        elif "PHP Proxy Judge" in info:
+                            pr.anonymity = "elite"
+                            if sync_mongo:
+                                pr.save_in_mongo()
+                            logger.info(f"Proxy {pr.proxy_str} judged to {pr.anonymity}")
+                        else:
+                            pr.valid = False
+                            if sync_mongo:
+                                pr.delete_from_mongo()
+                            logger.info(f"NOT VALID WHILE JUDGE {pr.proxy_str}")
+                except (SSLError, ProxyError, ConnectionError, UnboundLocalError, ConnectionResetError,
+                        TcpDisconnect, MitmproxyException, HttpReadDisconnect, ReadTimeoutError, ReadTimeout,
+                        JSONDecodeError):
+                    pr.valid = False
+                    if sync_mongo:
+                        pr.delete_from_mongo()
+                    logger.info(f"NOT VALID WHILE JUDGE {pr.proxy_str}")
+                except Exception as e:
+                    pr.valid = False
+                    if sync_mongo:
+                        pr.delete_from_mongo()
+                    logger.info(f"NOT VALID WHILE JUDGE  {pr.proxy_str}")
 
         try:
             if multiprocess:
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                    num_of_baths = math.ceil(len(proxies_objects) / max_workers)
-                    logger.info(f"Start MULTITHREAD work with {max_workers} workers and {num_of_baths} baths, total count of proxies: {len(proxies_objects)}")
+                    num_of_batch = math.ceil(len(proxies_objects) / max_workers)
+                    logger.info(f"Start MULTITHREAD work with {max_workers} workers and {num_of_batch} batches, total count of proxies: {len(proxies_objects)}")
                     try:
                         for proxy_collection in [
                             (proxies_objects[i*max_workers:(i+1)*max_workers],
-                             proxies_list[i*max_workers:(i+1)*max_workers]) for i in range(num_of_baths)]:
+                             proxies_list[i*max_workers:(i+1)*max_workers]) for i in range(num_of_batch)]:
                             executor.submit(check_list, *proxy_collection)
                     except Exception as e:
                         logger.error(f"ERROR WHEN MULTITHREAD {traceback.format_exc()}")
