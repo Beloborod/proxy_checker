@@ -118,5 +118,6 @@ proxy_collection.load("proxies.json")
 ### TODOS
 - [x] ~~Write README =)~~
 - [x] ~~Add docstrings~~
-- [ ] Add more proxy sites to parse proxy
+- [x] ~~Add more proxy sites to parse proxy~~
 - [ ] Make MongoDB not necessary
+- [ ] Improve proxy model and validation info

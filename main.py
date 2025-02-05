@@ -20,6 +20,7 @@ if __name__ == "__main__":
     for proxy in get_proxies_best_proxies():
         proxy_collection.add_proxy(proxy)
 
+    """THIS REPO TOOK TOO MUCH TIME (~3-10k proxies)"""
     for proxy in get_proxies_thespeedx():
         proxy_collection.add_proxy(proxy)
 
