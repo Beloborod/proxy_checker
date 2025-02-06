@@ -1,0 +1,25 @@
+name: "Deploy"
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Run command on remote server
+        uses: D3rHase/ssh-command-action@latest
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          user: ${{ secrets.SSH_USER }}
+          private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command: |
+            cd ${{ secrets.PROJECT_FOLDER }};
+            git stash;
+            git checkout master;
+            git pull;
+            git stash pop;
+            systemctl --user restart ${{ secrets.PROJECT_SERVICE_1 }};
