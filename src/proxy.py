@@ -118,8 +118,8 @@ class Proxy(object):
         judge_ratio = (self.judge_valid_count / (self.judge_valid_count + self.judge_invalid_count)) \
             if (self.judge_valid_count + self.judge_invalid_count) != 0 else 0
 
-        if ((success_ratio >= 0.5) and (judge_ratio >= 0.5) and (self.judge_invalid_count < 10)) \
-                or ((success_ratio == 1) and (judge_ratio == 0)):
+        if (((success_ratio >= 0.5) and (judge_ratio >= 0.5))
+                or ((success_ratio == 1) and (judge_ratio == 0))) and (self.judge_invalid_count < 10):
             still_valid = True
         else:
             still_valid = False
