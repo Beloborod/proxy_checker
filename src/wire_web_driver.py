@@ -3,10 +3,8 @@ from typing import TypedDict, List, Self
 from seleniumwire import undetected_chromedriver
 from typing import Union
 from selenium_stealth import stealth
-from platform import system
 from src.logger import logger_name
 import os
-import signal
 
 logger = logging.getLogger(logger_name)
 
