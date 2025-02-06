@@ -20,13 +20,13 @@ if __name__ == "__main__":
     for proxy in get_proxies_best_proxies():
         proxy_collection.add_proxy(proxy)
 
-    # """THIS REPO TOOK TOO MUCH TIME (~3-10k proxies)"""
-    # for proxy in get_proxies_thespeedx():
-    #     proxy_collection.add_proxy(proxy)
+    """THIS REPO TOOK TOO MUCH TIME (~3-10k proxies)"""
+    for proxy in get_proxies_thespeedx():
+        proxy_collection.add_proxy(proxy)
 
     """--- UPDATE SAVED PROXIES ---"""
     proxy_collection.load_from_mongo()
 
 
     """--- VALIDATE ALL ---"""
-    proxy_collection.validate_all(multiprocess=True, with_web_driver=False, sync_mongo=True, force=True)
+    proxy_collection.validate_all(multiprocess=True, with_web_driver=False, sync_mongo=True)
