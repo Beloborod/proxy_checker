@@ -76,7 +76,7 @@ while True:
                 proxy_collection.add_proxy(proxy)
 
         if (args.all or args.thespeedx) and (not args.ignore_thespeedx):
-            last_commit, thespeedx_proxies = get_proxies_thespeedx(last_commit)
+            thespeedx_proxies, last_commit = get_proxies_thespeedx(last_commit)
             for proxy in thespeedx_proxies:
                 proxy_collection.add_proxy(proxy)
 
