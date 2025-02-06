@@ -79,6 +79,7 @@ class DriverWrapper(object):
             logger.fatal(f'SYSTEM {system()} UNKNOWN, MEMORY LEAK PROBLEM')
         self.driver.quit()
         del self.driver
+        print("deleted quited")
 
     def _get_driver(self) -> Driver:
         """
