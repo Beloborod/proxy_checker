@@ -41,9 +41,9 @@ class Driver(undetected_chromedriver.Chrome):
         if proxy:
             super().__init__(use_subprocess=False, options=options, seleniumwire_options={
                 'proxy': proxy[0],
-            }, version_main=132)
+            }, version_main=95)
         else:
-            super().__init__(use_subprocess=False, options=options, version_main=132)
+            super().__init__(use_subprocess=False, options=options, version_main=95)
 
 
 class DriverWrapper(object):
