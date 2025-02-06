@@ -84,7 +84,7 @@ while True:
             proxy_collection.load_from_mongo()
 
 
-        proxy_collection.validate_all(args.force, args.mongo, args.web_driver, args.multi_process, args.max_workers,
-                                      args.mongo_drop, args.judge)
+        proxy_collection.validate_all(args.force, args.mongo, args.web_driver, args.multi_process,
+                                      int(args.max_workers), args.mongo_drop, args.judge)
     except KeyboardInterrupt:
         exit()
