@@ -78,8 +78,10 @@ class DriverWrapper(object):
         else:
             logger.fatal(f'SYSTEM {system()} UNKNOWN, MEMORY LEAK PROBLEM')
         self.driver.quit()
+        if hasattr(self.driver, "service") and getattr(self.driver.service, "process", None):
+            self.driver.service.process.wait(3)
+        os.waitpid(self.driver.browser_pid, 0)
         del self.driver
-        print("deleted quited")
 
     def _get_driver(self) -> Driver:
         """
