@@ -71,7 +71,7 @@ class DriverWrapper(object):
     def close_driver(self):
         pid = self.driver.browser_pid
         if system() == 'Linux':
-            os.kill(pid, signal.SIGKILL)
+            os.kill(pid, 9)
             print("kill", pid)
         elif system() == 'Windows':
             os.kill(pid, signal.SIGKILL)
