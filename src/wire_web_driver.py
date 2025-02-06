@@ -1,9 +1,12 @@
-from time import sleep
+import logging
 from typing import TypedDict, List, Self
 from seleniumwire import undetected_chromedriver
 from typing import Union
 from selenium_stealth import stealth
+from src.logger import logger_name
+import os
 
+logger = logging.getLogger(logger_name)
 
 PROXY_LIST = List[TypedDict("PROXY_LIST", {'http': str, 'https': str})]
 
@@ -39,11 +42,11 @@ class Driver(undetected_chromedriver.Chrome):
         options.add_argument("--silent")
 
         if proxy:
-            super().__init__(use_subprocess=False, options=options, seleniumwire_options={
+            super().__init__(use_subprocess=True, options=options, seleniumwire_options={
                 'proxy': proxy[0],
             }, version_main=132)
         else:
-            super().__init__(use_subprocess=False, options=options, version_main=132)
+            super().__init__(use_subprocess=True, options=options, version_main=132)
 
 
 class DriverWrapper(object):
@@ -60,10 +63,15 @@ class DriverWrapper(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
-        self.driver.close()
-        self.driver.quit()
-        del self.driver
+        self.close_driver()
         return True
+
+    def close_driver(self):
+        self.driver.quit()
+        if hasattr(self.driver, "service") and getattr(self.driver.service, "process", None):
+            self.driver.service.process.wait(3)
+        os.waitpid(self.driver.browser_pid, 0)
+        del self.driver
 
     def _get_driver(self) -> Driver:
         """
@@ -99,9 +107,7 @@ class DriverWrapper(object):
         :param proxy: List of proxies
         :return: self
         """
-        self.driver.close()
-        self.driver.quit()
-        del self.driver
+        self.close_driver()
         self.proxies = proxy
         self.driver = self._get_driver()
         return self
