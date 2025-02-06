@@ -20,14 +20,14 @@ URLS_TO_WRAP: Final = {
 
 
 def get_proxies_thespeedx(last_parsed_commit: str = None) -> Union[List[Proxy], Tuple[List[Proxy], str]]:
+    proxies = []
     with DriverWrapper() as driver_wrapper:
         if last_parsed_commit:
             driver_wrapper.driver.get("https://api.github.com/repos/TheSpeedX/SOCKS-List/commits")
             new_commit = json.loads(driver_wrapper.driver.find_element(By.TAG_NAME, "body").text)
             new_commit = new_commit[0]['sha']
             if new_commit == last_parsed_commit:
-                return [], new_commit
-        proxies = []
+                return proxies, new_commit
         for protocol, url in URLS_TO_WRAP.items():
             logger.info(f"Connect to {url}")
             try:
