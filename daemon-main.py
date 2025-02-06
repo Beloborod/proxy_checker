@@ -1,4 +1,6 @@
 import sys
+from time import sleep
+
 from proxy_wrappers.thespeedx import get_proxies_thespeedx
 from src.proxy import ProxyCollection
 from src.logger import setup_logger
@@ -51,7 +53,9 @@ args_parser.add_argument('-mp', '--multi-process', action='store_true',
                          help='Use multithreading to validate',
                          required=('--max-workers' in sys.argv) or ('-mw' in sys.argv))
 
-args_parser.add_argument('-mw', '--max-workers',  help='Max workers count to multithreading')
+args_parser.add_argument('-mw', '--max-workers',  help='Max workers count to multithreading', type=int)
+
+args_parser.add_argument('-sl', '--sleep',  help='Sleep time between cycles', type=float)
 
 args_parser.add_argument('-ln', '--logger-name',  help='Name of logger file', default='proxy_checker')
 
@@ -90,6 +94,8 @@ while True:
 
 
         proxy_collection.validate_all(args.force, args.mongo_save, args.web_driver, args.multi_process,
-                                      int(args.max_workers), args.mongo_drop, args.judge)
+                                      args.max_workers, args.mongo_drop, args.judge)
+
+        sleep(args.sleep)
     except KeyboardInterrupt:
         sys.exit(0)
