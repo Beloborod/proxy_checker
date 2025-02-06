@@ -1,8 +1,14 @@
+import logging
 from typing import TypedDict, List, Self
 from seleniumwire import undetected_chromedriver
 from typing import Union
 from selenium_stealth import stealth
+from platform import system
+from src.logger import logger_name
+import os
+import signal
 
+logger = logging.getLogger(logger_name)
 
 PROXY_LIST = List[TypedDict("PROXY_LIST", {'http': str, 'https': str})]
 
@@ -19,7 +25,7 @@ class Driver(undetected_chromedriver.Chrome):
         options.add_argument("--headless")
         options.add_argument("--window-size=1920,1080")
         options.add_argument(f'--user-agent={agent}')
-        # options.add_argument('--no-sandbox')
+        options.add_argument('--no-sandbox')
         options.add_argument("--disable-extensions")
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--enable-javascript")
@@ -40,9 +46,9 @@ class Driver(undetected_chromedriver.Chrome):
         if proxy:
             super().__init__(use_subprocess=False, options=options, seleniumwire_options={
                 'proxy': proxy[0],
-            }, version_main=132, no_sandbox=False)
+            }, version_main=132)
         else:
-            super().__init__(use_subprocess=False, options=options, version_main=132, no_sandbox=False)
+            super().__init__(use_subprocess=False, options=options, version_main=132)
 
 
 class DriverWrapper(object):
@@ -59,10 +65,19 @@ class DriverWrapper(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
-        self.driver.close()
+        self.close_driver()
+        return True
+
+    def close_driver(self):
+        pid = self.driver.browser_pid
+        if system() == 'Linux':
+            os.kill(pid, signal.SIGTERM)
+        elif system() == 'Windows':
+            os.kill(pid, signal.SIGTERM)
+        else:
+            logger.fatal(f'SYSTEM {system()} UNKNOWN, MEMORY LEAK PROBLEM')
         self.driver.quit()
         del self.driver
-        return True
 
     def _get_driver(self) -> Driver:
         """
@@ -98,9 +113,7 @@ class DriverWrapper(object):
         :param proxy: List of proxies
         :return: self
         """
-        self.driver.close()
-        self.driver.quit()
-        del self.driver
+        self.close_driver()
         self.proxies = proxy
         self.driver = self._get_driver()
         return self
