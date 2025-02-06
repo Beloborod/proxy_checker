@@ -7,7 +7,7 @@ on:
 
 jobs:
   tests:
-    uses: Beloborod/proxy_checker/.github/workflows/tests.yml@main
+    uses: ./.github/workflows/tests.yml
   deploy:
     needs: tests
-    uses: Beloborod/proxy_checker/.github/workflows/deploy.yml@main
+    uses: ./.github/workflows/deploy.yml
