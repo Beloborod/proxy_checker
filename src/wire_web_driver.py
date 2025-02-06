@@ -48,6 +48,7 @@ class DriverWrapper(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         self.driver.close()
+        self.driver.quit()
         del self.driver
         return True
 
@@ -86,6 +87,7 @@ class DriverWrapper(object):
         :return: self
         """
         self.driver.close()
+        self.driver.quit()
         del self.driver
         self.proxies = proxy
         self.driver = self._get_driver()
