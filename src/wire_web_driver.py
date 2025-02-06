@@ -69,14 +69,6 @@ class DriverWrapper(object):
         return True
 
     def close_driver(self):
-        pid = self.driver.browser_pid
-        if system() == 'Linux':
-            os.kill(pid, signal.SIGKILL)
-            print("kill", pid)
-        elif system() == 'Windows':
-            os.kill(pid, signal.SIGKILL)
-        else:
-            logger.fatal(f'SYSTEM {system()} UNKNOWN, MEMORY LEAK PROBLEM')
         self.driver.quit()
         if hasattr(self.driver, "service") and getattr(self.driver.service, "process", None):
             self.driver.service.process.wait(3)
