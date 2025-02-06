@@ -1,0 +1,13 @@
+name: "On push into master"
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  tests:
+    uses: Beloborod/proxy_checker/.github/workflows/tests.yml@main
+  deploy:
+    needs: tests
+    uses: Beloborod/proxy_checker/.github/workflows/deploy.yml@main
