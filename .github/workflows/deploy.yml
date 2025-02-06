@@ -15,7 +15,11 @@ on:
         required: true
       PROJECT_SERVICE_1:
         required: true
-
+      PROJECT_SERVICE_2:
+        required: true
+      PROJECT_SERVICE_3:
+        required: true
+        
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -36,3 +40,5 @@ jobs:
             git pull;
             git stash pop;
             systemctl --user restart ${{ secrets.PROJECT_SERVICE_1 }};
+            systemctl --user restart ${{ secrets.PROJECT_SERVICE_2 }};
+            systemctl --user restart ${{ secrets.PROJECT_SERVICE_3 }};
