@@ -1,14 +1,12 @@
-import traceback
+import json
 from ipaddress import IPv4Address
-from typing import List, Final
+from typing import List, Final, Union, Tuple
 from src.wire_web_driver import DriverWrapper
 from bs4 import BeautifulSoup
 from src.proxy import Proxy
 import logging
 from src.logger import logger_name
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions
 
 logger = logging.getLogger(logger_name)
 
@@ -21,8 +19,14 @@ URLS_TO_WRAP: Final = {
 }
 
 
-def get_proxies_thespeedx() -> List[Proxy]:
+def get_proxies_thespeedx(last_parsed_commit: str = None) -> Union[List[Proxy], Tuple[List[Proxy], str]]:
     with DriverWrapper() as driver_wrapper:
+        if last_parsed_commit:
+            driver_wrapper.driver.get("https://api.github.com/repos/TheSpeedX/SOCKS-List/commits")
+            new_commit = json.loads(driver_wrapper.driver.find_element(By.TAG_NAME, "body").text)
+            new_commit = new_commit[0]['sha']
+            if new_commit == last_parsed_commit:
+                return [], new_commit
         proxies = []
         for protocol, url in URLS_TO_WRAP.items():
             logger.info(f"Connect to {url}")
@@ -40,5 +44,8 @@ def get_proxies_thespeedx() -> List[Proxy]:
                                   anonymity="UNKNOWN")
                     proxies.append(proxy)
             logger.info(f"After {url} totally get {len(proxies)}")
-    return proxies
+    if last_parsed_commit:
+        return proxies, new_commit
+    else:
+        return proxies
 
