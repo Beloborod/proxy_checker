@@ -51,13 +51,15 @@ args_parser.add_argument('-mp', '--multi-process', action='store_true',
 
 args_parser.add_argument('-mw', '--max-workers',  help='Max workers count to multithreading')
 
+args_parser.add_argument('-ln', '--logger-name',  help='Name of logger file', default='proxy_checker')
+
 
 
 
 args = args_parser.parse_args()
 
 
-setup_logger()
+setup_logger(logger_file=args.logger_name)
 proxy_collection = ProxyCollection()
 last_commit = "nothing"
 
