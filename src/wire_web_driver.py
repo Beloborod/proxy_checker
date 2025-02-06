@@ -19,7 +19,7 @@ class Driver(undetected_chromedriver.Chrome):
         options.add_argument("--headless")
         options.add_argument("--window-size=1920,1080")
         options.add_argument(f'--user-agent={agent}')
-        options.add_argument('--no-sandbox')
+        # options.add_argument('--no-sandbox')
         options.add_argument("--disable-extensions")
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--enable-javascript")
@@ -40,9 +40,9 @@ class Driver(undetected_chromedriver.Chrome):
         if proxy:
             super().__init__(use_subprocess=False, options=options, seleniumwire_options={
                 'proxy': proxy[0],
-            }, version_main=132)
+            }, version_main=132, no_sandbox=False)
         else:
-            super().__init__(use_subprocess=False, options=options, version_main=132)
+            super().__init__(use_subprocess=False, options=options, version_main=132, no_sandbox=False)
 
 
 class DriverWrapper(object):
