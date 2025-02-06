@@ -350,6 +350,8 @@ class ProxyCollection(object):
                             (proxies_objects[i*max_workers:(i+1)*max_workers],
                              proxies_list[i*max_workers:(i+1)*max_workers]) for i in range(num_of_batch)]:
                             executor.submit(check_list, *proxy_collection)
+                    except KeyboardInterrupt:
+                        print("KI")
                     except Exception as e:
                         logger.error(f"ERROR WHEN MULTITHREAD {traceback.format_exc()}")
             else:
