@@ -1,5 +1,5 @@
+import signal
 import sys
-
 from proxy_wrappers.thespeedx import get_proxies_thespeedx
 from src.proxy import ProxyCollection
 from src.logger import setup_logger
@@ -63,30 +63,33 @@ setup_logger(logger_file=args.logger_name)
 proxy_collection = ProxyCollection()
 last_commit = "nothing"
 
+def signal_handler(sig, frame):
+    print('Exit by user')
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
 while True:
-    try:
-        if (args.all or args.free_proxy) and (not args.ignore_free_proxy):
-            for proxy in get_proxies_free_proxy():
-                proxy_collection.add_proxy(proxy)
+    if (args.all or args.free_proxy) and (not args.ignore_free_proxy):
+        for proxy in get_proxies_free_proxy():
+            proxy_collection.add_proxy(proxy)
 
-        if (args.all or args.geonode) and (not args.ignore_geonode):
-            for proxy in get_proxies_geonode():
-                proxy_collection.add_proxy(proxy)
+    if (args.all or args.geonode) and (not args.ignore_geonode):
+        for proxy in get_proxies_geonode():
+            proxy_collection.add_proxy(proxy)
 
-        if (args.all or args.best_proxies) and (not args.ignore_best_proxies):
-            for proxy in get_proxies_best_proxies():
-                proxy_collection.add_proxy(proxy)
+    if (args.all or args.best_proxies) and (not args.ignore_best_proxies):
+        for proxy in get_proxies_best_proxies():
+            proxy_collection.add_proxy(proxy)
 
-        if (args.all or args.thespeedx) and (not args.ignore_thespeedx):
-            thespeedx_proxies, last_commit = get_proxies_thespeedx(last_commit)
-            for proxy in thespeedx_proxies:
-                proxy_collection.add_proxy(proxy)
+    if (args.all or args.thespeedx) and (not args.ignore_thespeedx):
+        thespeedx_proxies, last_commit = get_proxies_thespeedx(last_commit)
+        for proxy in thespeedx_proxies:
+            proxy_collection.add_proxy(proxy)
 
-        if args.mongo:
-            proxy_collection.load_from_mongo()
+    if args.mongo:
+        proxy_collection.load_from_mongo()
 
 
-        proxy_collection.validate_all(args.force, args.mongo, args.web_driver, args.multi_process,
-                                      int(args.max_workers), args.mongo_drop, args.judge)
-    except KeyboardInterrupt:
-        exit()
+    proxy_collection.validate_all(args.force, args.mongo, args.web_driver, args.multi_process,
+                                  int(args.max_workers), args.mongo_drop, args.judge)
