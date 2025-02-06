@@ -63,7 +63,7 @@ last_commit = "nothing"
 
 while True:
     try:
-        if (args.all or args.free_proxy) and (not args.ignore_free_proxies):
+        if (args.all or args.free_proxy) and (not args.ignore_free_proxy):
             for proxy in get_proxies_free_proxy():
                 proxy_collection.add_proxy(proxy)
 
