@@ -55,7 +55,7 @@ args_parser.add_argument('-mp', '--multi-process', action='store_true',
 
 args_parser.add_argument('-mw', '--max-workers',  help='Max workers count to multithreading', type=int)
 
-args_parser.add_argument('-sl', '--sleep',  help='Sleep time between cycles', type=float)
+args_parser.add_argument('-sl', '--sleep',  help='Sleep time between cycles', type=float, default=0.1)
 
 args_parser.add_argument('-ln', '--logger-name',  help='Name of logger file', default='proxy_checker')
 
