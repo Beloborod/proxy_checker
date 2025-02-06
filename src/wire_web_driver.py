@@ -44,11 +44,11 @@ class Driver(undetected_chromedriver.Chrome):
         options.add_argument("--silent")
 
         if proxy:
-            super().__init__(use_subprocess=False, options=options, seleniumwire_options={
+            super().__init__(use_subprocess=True, options=options, seleniumwire_options={
                 'proxy': proxy[0],
             }, version_main=132)
         else:
-            super().__init__(use_subprocess=False, options=options, version_main=132)
+            super().__init__(use_subprocess=True, options=options, version_main=132)
 
 
 class DriverWrapper(object):
@@ -70,7 +70,6 @@ class DriverWrapper(object):
 
     def close_driver(self):
         pid = self.driver.browser_pid
-        self.driver.close()
         if system() == 'Linux':
             os.kill(pid, signal.SIGKILL)
             print("kill", pid)
