@@ -1,6 +1,5 @@
 import json
 import math
-import sys
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -275,8 +274,6 @@ class ProxyCollection(object):
                     if sync_mongo:
                         pr.save_in_mongo()
                     logger.info(f"NOT VALID {pr.proxy_str} expected error")
-                except KeyboardInterrupt:
-                    sys.exit(0)
                 except Exception as e:
                     pr.valid = False
                     if sync_mongo:
@@ -337,8 +334,6 @@ class ProxyCollection(object):
                     if sync_mongo:
                         pr.save_in_mongo()
                     logger.info(f"NOT VALID WHILE JUDGE {pr.proxy_str} expected error")
-                except KeyboardInterrupt:
-                    sys.exit(0)
                 except Exception as e:
                     pr.judged = False
                     if sync_mongo:
@@ -356,13 +351,11 @@ class ProxyCollection(object):
                              proxies_list[i*max_workers:(i+1)*max_workers]) for i in range(num_of_batch)]:
                             executor.submit(check_list, *proxy_collection)
                     except KeyboardInterrupt:
-                            sys.exit(0)
+                        print("KI")
                     except Exception as e:
                         logger.error(f"ERROR WHEN MULTITHREAD {traceback.format_exc()}")
             else:
                 check_list(proxies_objects, proxies_list)
-        except KeyboardInterrupt:
-            sys.exit(0)
         except Exception as e:
             logger.error(f"ERROR WHEN UPDATE PROXIES {traceback.format_exc()}")
 

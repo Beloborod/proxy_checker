@@ -29,8 +29,11 @@ thespeedx = args_parser.add_mutually_exclusive_group()
 thespeedx.add_argument('--thespeedx', action='store_true', help='Use Thespeedx wrapper')
 thespeedx.add_argument('--ignore-thespeedx', action='store_true', help='Do not use Thespeedx wrapper')
 
-args_parser.add_argument('-m', '--mongo', action='store_true',
+args_parser.add_argument('-ml', '--mongo-load', action='store_true',
                          help='Load and validate proxies from mongo, save new proxies to mongo')
+
+args_parser.add_argument('-ms', '--mongo-save', action='store_true',
+                         help='Save new proxies to mongo, or rewrite if currently have')
 
 args_parser.add_argument('-md', '--mongo-drop', action='store_true',
                          help='Drop mongo base before validate')
@@ -82,11 +85,11 @@ while True:
             for proxy in thespeedx_proxies:
                 proxy_collection.add_proxy(proxy)
 
-        if args.mongo:
+        if args.mongo_load:
             proxy_collection.load_from_mongo()
 
 
-        proxy_collection.validate_all(args.force, args.mongo, args.web_driver, args.multi_process,
+        proxy_collection.validate_all(args.force, args.mongo_save, args.web_driver, args.multi_process,
                                       int(args.max_workers), args.mongo_drop, args.judge)
     except KeyboardInterrupt:
         sys.exit(0)
