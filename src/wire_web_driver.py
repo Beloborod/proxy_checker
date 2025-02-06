@@ -1,4 +1,3 @@
-from time import sleep
 from typing import TypedDict, List, Self
 from seleniumwire import undetected_chromedriver
 from typing import Union
@@ -41,9 +40,9 @@ class Driver(undetected_chromedriver.Chrome):
         if proxy:
             super().__init__(use_subprocess=False, options=options, seleniumwire_options={
                 'proxy': proxy[0],
-            }, version_main=95)
+            }, version_main=132)
         else:
-            super().__init__(use_subprocess=False, options=options, version_main=95)
+            super().__init__(use_subprocess=False, options=options, version_main=132)
 
 
 class DriverWrapper(object):
