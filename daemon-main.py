@@ -99,8 +99,8 @@ while True:
                                       args.max_workers, args.mongo_drop, args.judge)
 
         proxy_collection.cleanup()
-        # st.cache_data.clear()
-        # st.cache_resource.clear()
+        st.cache_data.clear()
+        st.cache_resource.clear()
         gc.collect()
         sleep(args.sleep)
     except KeyboardInterrupt:
