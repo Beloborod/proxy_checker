@@ -1,6 +1,7 @@
 import sys
 from time import sleep
 import streamlit as st
+import gc
 from proxy_wrappers.thespeedx import get_proxies_thespeedx
 from src.proxy import ProxyCollection
 from src.logger import setup_logger
@@ -98,8 +99,9 @@ while True:
                                       args.max_workers, args.mongo_drop, args.judge)
 
         proxy_collection.cleanup()
-        st.cache_data.clear()
-        st.cache_resource.clear()
+        # st.cache_data.clear()
+        # st.cache_resource.clear()
+        gc.collect()
         sleep(args.sleep)
     except KeyboardInterrupt:
         sys.exit(0)
