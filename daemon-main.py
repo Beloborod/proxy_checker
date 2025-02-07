@@ -97,6 +97,7 @@ while True:
         proxy_collection.validate_all(args.force, args.mongo_save, args.web_driver, args.multi_process,
                                       args.max_workers, args.mongo_drop, args.judge)
 
+        proxy_collection.cleanup()
         sleep(args.sleep)
     except KeyboardInterrupt:
         sys.exit(0)

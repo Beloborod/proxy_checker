@@ -162,9 +162,14 @@ class ProxyCollection(object):
         if proxies is None:
             proxies = []
         self._proxies = proxies
-        self.proxies = []
+        self.proxies: List[Proxy] = []
         if len(self._proxies) > 0:
             self.check_list()
+
+    def cleanup(self):
+        for proxy in self.proxies:
+            del proxy
+        del self
 
     def check_list(self) -> None:
         """
