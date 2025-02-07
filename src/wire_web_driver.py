@@ -67,6 +67,9 @@ class DriverWrapper(object):
         return True
 
     def close_driver(self):
+        """
+        Close driver with process.wait and control to avoid zombie processes
+        """
         self.driver.quit()
         if hasattr(self.driver, "service") and getattr(self.driver.service, "process", None):
             self.driver.service.process.wait(3)
