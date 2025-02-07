@@ -1,7 +1,5 @@
 import sys
 from time import sleep
-import streamlit as st
-import gc
 from proxy_wrappers.thespeedx import get_proxies_thespeedx
 from src.proxy import ProxyCollection
 from src.logger import setup_logger
@@ -56,8 +54,6 @@ args_parser.add_argument('-mp', '--multi-process', action='store_true',
 
 args_parser.add_argument('-mw', '--max-workers',  help='Max workers count to multithreading', type=int)
 
-args_parser.add_argument('-sl', '--sleep',  help='Sleep time between cycles', type=float, default=0.1)
-
 args_parser.add_argument('-ln', '--logger-name',  help='Name of logger file', default='proxy_checker')
 
 
@@ -70,38 +66,28 @@ setup_logger(logger_file=args.logger_name)
 last_commit = "nothing"
 
 
-while True:
-    try:
-        proxy_collection = ProxyCollection()
+proxy_collection = ProxyCollection()
 
-        if (args.all or args.free_proxy) and (not args.ignore_free_proxy):
-            for proxy in get_proxies_free_proxy():
-                proxy_collection.add_proxy(proxy)
+if (args.all or args.free_proxy) and (not args.ignore_free_proxy):
+    for proxy in get_proxies_free_proxy():
+        proxy_collection.add_proxy(proxy)
 
-        if (args.all or args.geonode) and (not args.ignore_geonode):
-            for proxy in get_proxies_geonode():
-                proxy_collection.add_proxy(proxy)
+if (args.all or args.geonode) and (not args.ignore_geonode):
+    for proxy in get_proxies_geonode():
+        proxy_collection.add_proxy(proxy)
 
-        if (args.all or args.best_proxies) and (not args.ignore_best_proxies):
-            for proxy in get_proxies_best_proxies():
-                proxy_collection.add_proxy(proxy)
+if (args.all or args.best_proxies) and (not args.ignore_best_proxies):
+    for proxy in get_proxies_best_proxies():
+        proxy_collection.add_proxy(proxy)
 
-        if (args.all or args.thespeedx) and (not args.ignore_thespeedx):
-            thespeedx_proxies, last_commit = get_proxies_thespeedx(last_commit)
-            for proxy in thespeedx_proxies:
-                proxy_collection.add_proxy(proxy)
+if (args.all or args.thespeedx) and (not args.ignore_thespeedx):
+    thespeedx_proxies, last_commit = get_proxies_thespeedx(last_commit)
+    for proxy in thespeedx_proxies:
+        proxy_collection.add_proxy(proxy)
 
-        if args.mongo_load:
-            proxy_collection.load_from_mongo()
+if args.mongo_load:
+    proxy_collection.load_from_mongo()
 
 
-        proxy_collection.validate_all(args.force, args.mongo_save, args.web_driver, args.multi_process,
-                                      args.max_workers, args.mongo_drop, args.judge)
-
-        proxy_collection.cleanup()
-        st.cache_data.clear()
-        st.cache_resource.clear()
-        gc.collect()
-        sleep(args.sleep)
-    except KeyboardInterrupt:
-        sys.exit(0)
+proxy_collection.validate_all(args.force, args.mongo_save, args.web_driver, args.multi_process,
+                              args.max_workers, args.mongo_drop, args.judge)

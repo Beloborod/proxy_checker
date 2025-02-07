@@ -177,7 +177,7 @@ After = network.target
 Type = simple
 WorkingDirectory=<YOUR_DIRECTORY>
 ExecStart = python3.12 <YOUR_DIRECTORY>/daemon-main.py -a -ms -f -mp -mw 10 -ln main_checker -sl 5
-Restart = on-failure
+Restart = always
 SyslogIdentifier = proxy_checker_main
 RestartSec = 2
 TimeoutStartSec = infinity
@@ -199,4 +199,4 @@ And third, but more time it's disabled (too many proxies collected and validated
 - [x] ~~Add docstrings~~
 - [x] ~~Add more proxy sites to parse proxy~~
 - [ ] Make MongoDB not necessary
-- [x] Improve proxy model and validation info
+- [x] ~~Improve proxy model and validation info~~
