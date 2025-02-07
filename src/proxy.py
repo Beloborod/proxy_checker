@@ -190,6 +190,7 @@ class ProxyCollection(object):
         for proxy in self.proxies:
             if ((proxy.ip == new_proxy.ip) and (proxy.port == new_proxy.port)
                     and (proxy.protocols == new_proxy.protocols)):
+                del new_proxy
                 break
         else:
             self.proxies.append(new_proxy)
